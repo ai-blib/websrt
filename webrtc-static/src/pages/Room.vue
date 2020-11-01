@@ -85,7 +85,7 @@ export default {
       canClickBtn: true,
       sockId: '',
       roomUsers: [],
-      canSupportVideo: true,
+      canSupportVideo: false,
       localStream: null,
       peer: null,
       peerConfigs: {
@@ -112,13 +112,31 @@ export default {
   },
   methods: {
     canSupportWebRTC () {
-      if (typeof navigator.mediaDevices !== 'object' || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-        this.$message.error('当前域名的浏览器不支持WebRTC！');
-        this.canSupportVideo = false;
+      if (typeof navigator.mediaDevices !== 'object') {
+        this.$message.error('No navigator.mediaDevices');
+        return false;
+      }
+      if (typeof navigator.mediaDevices.enumerateDevices !== 'function') {
+        this.$message.error('No navigator.mediaDevices.enumerateDevices');
+        return false;
+      }
+      if (typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        this.$message.error('No navigator.mediaDevices.getUserMedia');
         return false;
       }
       this.canSupportVideo = true;
+      this.getDevices();
       return true;
+    },
+    async getDevices () {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        VIDEO_VIEW.showDevicesNameByDevices(devices);
+      } catch (error) {
+        console.error(error);
+        const msg = `getDevices error: ${error.name} : ${error.message}`;
+        this.$message.error(msg);
+      }
     },
     initSocketEvents () {
       window.onbeforeunload = () => {
